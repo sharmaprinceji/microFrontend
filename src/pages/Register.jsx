@@ -6,9 +6,7 @@ import { toast } from "react-toastify";
 import Loader from "../components/Loader";
 
 export default function Register() {
-
   const navigate = useNavigate();
-
   const [form, setForm] = useState({
 
     name: "",
@@ -18,8 +16,6 @@ export default function Register() {
   });
 
   const [loading, setLoading] = useState(false);
-
-
   const handleChange = (e) => {
 
     setForm({
