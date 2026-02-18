@@ -2,10 +2,13 @@ import { useState, useRef } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import Loader from "../components/Loader";
 
 export default function AddProduct() {
+
     const navigate = useNavigate();
     const fileRef = useRef();
+
     const [form, setForm] = useState({
 
         title: "",
@@ -17,12 +20,15 @@ export default function AddProduct() {
     });
 
     const [preview, setPreview] = useState(null);
+
     const [loading, setLoading] = useState(false);
+
     const [progress, setProgress] = useState(0);
 
 
     // text change
     const handleChange = (e) => {
+
         setForm({
             ...form,
             [e.target.name]: e.target.value
@@ -33,7 +39,9 @@ export default function AddProduct() {
 
     // file select
     const handleFileChange = (file) => {
+
         if (!file) return;
+
         setForm({
             ...form,
             image: file,
@@ -41,18 +49,23 @@ export default function AddProduct() {
         });
 
         setPreview(URL.createObjectURL(file));
+
     };
 
 
     // input file change
     const handleInputFile = (e) => {
+
         handleFileChange(e.target.files[0]);
+
     };
 
 
     // drag drop
     const handleDrop = (e) => {
+
         e.preventDefault();
+
         handleFileChange(e.dataTransfer.files[0]);
 
     };
@@ -60,7 +73,9 @@ export default function AddProduct() {
 
     // url change
     const handleUrlChange = (e) => {
+
         const url = e.target.value;
+
         setForm({
             ...form,
             imageUrl: url,
@@ -77,6 +92,8 @@ export default function AddProduct() {
 
         e.preventDefault();
 
+        if (loading) return;
+
         try {
 
             if (!form.image && !form.imageUrl) {
@@ -84,6 +101,7 @@ export default function AddProduct() {
                 alert("Select image file OR enter image URL");
 
                 return;
+
             }
 
             if (form.image && form.imageUrl) {
@@ -91,16 +109,19 @@ export default function AddProduct() {
                 alert("Select only one: file OR URL");
 
                 return;
-            }
 
+            }
 
             setLoading(true);
             setProgress(0);
+
+            const start = Date.now();
+
             const formData = new FormData();
+
             formData.append("title", form.title);
             formData.append("price", form.price);
             formData.append("description", form.description);
-
 
             if (form.image)
                 formData.append("image", form.image);
@@ -113,29 +134,46 @@ export default function AddProduct() {
                 "/products",
 
                 formData,
+
                 {
+
                     headers: {
+
                         "Content-Type": "multipart/form-data"
+
                     },
+
                     onUploadProgress: (event) => {
-                        const percent =
-                            Math.round(
-                                (event.loaded * 100) /
-                                event.total
-                            );
+
+                        const percent = Math.round(
+                            (event.loaded * 100) / event.total
+                        );
+
                         setProgress(percent);
+
                     }
 
                 }
 
             );
 
-            alert("Product added successfully");
-            navigate("/products");
+            // minimum 2 second loader
+            const elapsed = Date.now() - start;
+
+            const delay = Math.max(2000 - elapsed, 0);
+
+            setTimeout(() => {
+
+                alert("Product added successfully");
+
+                navigate("/products");
+
+            }, delay);
+
         }
 
         catch (error) {
-           // console.error(error);
+
             alert(
                 error.response?.data?.message ||
                 "Upload failed"
@@ -144,8 +182,14 @@ export default function AddProduct() {
         }
 
         finally {
-            setLoading(false);
-            setProgress(0);
+
+            setTimeout(() => {
+
+                setLoading(false);
+                setProgress(0);
+
+            }, 500);
+
         }
 
     };
@@ -173,6 +217,7 @@ export default function AddProduct() {
                     value={form.title}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                     style={styles.input}
                     whileFocus={styles.inputFocus}
                 />
@@ -185,6 +230,7 @@ export default function AddProduct() {
                     value={form.price}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                     style={styles.input}
                     whileFocus={styles.inputFocus}
                 />
@@ -196,34 +242,26 @@ export default function AddProduct() {
                     value={form.description}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                     style={styles.textarea}
                     whileFocus={styles.inputFocus}
                 />
 
 
-                {/* DRAG DROP AREA */}
+                {/* DROP AREA */}
                 <motion.div
-
-                    style={styles.dropArea}
-
-                    onDrop={handleDrop}
-
-                    onDragOver={(e) =>
-                        e.preventDefault()
-                    }
-
-                    onClick={() =>
-                        fileRef.current.click()
-                    }
-
-                    whileHover={{
-                        scale: 1.02
+                    style={{
+                        ...styles.dropArea,
+                        opacity: loading ? 0.6 : 1
                     }}
-
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => !loading && fileRef.current.click()}
                 >
 
-                    Drag & Drop Image
-                    OR Click to Select
+                    {loading
+                        ? "Uploading..."
+                        : "Drag & Drop Image OR Click to Select"}
 
                 </motion.div>
 
@@ -233,6 +271,7 @@ export default function AddProduct() {
                     hidden
                     ref={fileRef}
                     onChange={handleInputFile}
+                    disabled={loading}
                 />
 
 
@@ -242,6 +281,7 @@ export default function AddProduct() {
                     placeholder="OR paste image URL"
                     value={form.imageUrl}
                     onChange={handleUrlChange}
+                    disabled={loading}
                     style={styles.input}
                     whileFocus={styles.inputFocus}
                 />
@@ -258,18 +298,16 @@ export default function AddProduct() {
                 )}
 
 
-                {/* PROGRESS */}
+                {/* PROGRESS BAR */}
                 {loading && (
 
                     <div style={styles.progressBar}>
 
                         <motion.div
-
                             style={{
                                 ...styles.progressFill,
                                 width: `${progress}%`
                             }}
-
                         />
 
                     </div>
@@ -277,14 +315,28 @@ export default function AddProduct() {
                 )}
 
 
+                {/* BUTTON */}
                 <motion.button
                     disabled={loading}
                     style={styles.button}
-                    whileHover={{ scale: 1.05 }}
                 >
 
                     {loading
-                        ? `Uploading ${progress}%`
+
+                        ? (
+
+                            <div style={styles.loaderRow}>
+
+                                <Loader />
+
+                                <span>
+                                    Uploading {progress}%
+                                </span>
+
+                            </div>
+
+                        )
+
                         : "Add Product"}
 
                 </motion.button>
@@ -349,8 +401,7 @@ const styles = {
         height: "180px",
         objectFit: "cover",
         borderRadius: "10px",
-        alignSelf: "center",
-        border: "1px solid #ddd"
+        alignSelf: "center"
     },
 
     progressBar: {
@@ -371,7 +422,16 @@ const styles = {
         background: "#667eea",
         color: "white",
         border: "none",
-        borderRadius: "8px"
+        borderRadius: "8px",
+        cursor: "pointer",
+        height: "45px"
+    },
+
+    loaderRow: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px"
     }
 
 };

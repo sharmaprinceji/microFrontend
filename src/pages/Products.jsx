@@ -2,19 +2,21 @@ import { useEffect, useState } from "react";
 import API from "../api/axios";
 import ProductCard from "../components/ProductCard";
 import { motion } from "framer-motion";
+import ProductSkeleton from "../components/ProductSkeleton";
 
 export default function Products() {
 
   const [products, setProducts] = useState([]);
-
   const [search, setSearch] = useState("");
-
   const [page, setPage] = useState(1);
-
   const [totalPages, setTotalPages] = useState(1);
-
+  const [loading, setLoading] = useState(true);
 
   const fetchProducts = async () => {
+
+    setLoading(true);
+
+    const start = Date.now();
 
     try {
 
@@ -22,16 +24,32 @@ export default function Products() {
         `/products?search=${search}&page=${page}&limit=8`
       );
 
-      setProducts(res.data.data);
+      setProducts(res.data.data || []);
+      setTotalPages(res.data.pages || 1);
 
-      setTotalPages(res.data.pages);
+    }
 
-    } catch (error) {
+    catch (error) {
 
       console.error(error);
-    }
-  };
 
+    }
+
+    finally {
+
+      const elapsed = Date.now() - start;
+
+      const delay = Math.max(2000 - elapsed, 0);
+
+      setTimeout(() => {
+
+        setLoading(false);
+
+      }, delay);
+
+    }
+
+  };
 
   useEffect(() => {
 
@@ -39,6 +57,24 @@ export default function Products() {
 
   }, [search, page]);
 
+  // Skeleton loader
+  if (loading) {
+
+    return (
+
+      <div style={styles.container}>
+
+        <div style={styles.grid}>
+          {[...Array(8)].map((_, i) => (
+            <ProductSkeleton key={i} />
+          ))}
+        </div>
+
+      </div>
+
+    );
+
+  }
 
   return (
 
@@ -51,6 +87,7 @@ export default function Products() {
       {/* Search */}
       <motion.input
         placeholder="Search products..."
+        value={search}
         onChange={(e) => {
           setSearch(e.target.value);
           setPage(1);
@@ -59,21 +96,27 @@ export default function Products() {
         whileFocus={{ scale: 1.03 }}
       />
 
-
       {/* Products Grid */}
       <div style={styles.grid}>
 
-        {products.map(product => (
+        {products.length === 0 ? (
 
-          <ProductCard
-            key={product._id}
-            product={product}
-          />
+          <p>No products found</p>
 
-        ))}
+        ) : (
+
+          products.map(product => (
+
+            <ProductCard
+              key={product._id}
+              product={product}
+            />
+
+          ))
+
+        )}
 
       </div>
-
 
       {/* Pagination */}
       <div style={styles.pagination}>
@@ -86,11 +129,9 @@ export default function Products() {
           ← Prev
         </button>
 
-
         <span>
           Page {page} of {totalPages}
         </span>
-
 
         <button
           disabled={page === totalPages}
@@ -103,14 +144,17 @@ export default function Products() {
       </div>
 
     </motion.div>
-  );
-}
 
+  );
+
+}
 
 const styles = {
 
   container: {
-    padding: "20px"
+    padding: "20px",
+    maxWidth: "1200px",
+    margin: "0 auto"
   },
 
   search: {
@@ -119,19 +163,19 @@ const styles = {
     maxWidth: "400px",
     marginBottom: "20px",
     borderRadius: "8px",
-    border: "1px solid #ddd"
+    border: "1px solid #ddd",
+    outline: "none"
   },
 
-grid: {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 220px))",
-  justifyContent: "center",
-  gap: "20px"
-},
-
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 220px))",
+    justifyContent: "center",
+    gap: "20px"
+  },
 
   pagination: {
-    marginTop: "20px",
+    marginTop: "30px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",

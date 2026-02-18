@@ -1,85 +1,127 @@
 import { useState, useEffect, useRef } from "react";
-
 import { useNavigate, useParams } from "react-router-dom";
-
 import API from "../api/axios";
-
 import { motion } from "framer-motion";
-
+import Loader from "../components/Loader";
 
 export default function EditProduct() {
+
     const navigate = useNavigate();
+
     const { id } = useParams();
+
     const fileRef = useRef();
+
     const [form, setForm] = useState({
+
         title: "",
         price: "",
         description: "",
         image: null,
         imageUrl: ""
+
     });
 
-    const [preview, setPreview] =
-        useState(null);
+    const [preview, setPreview] = useState(null);
 
-    const [loading, setLoading] =
-        useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const [progress, setProgress] =
-        useState(0);
+    const [progress, setProgress] = useState(0);
+
+    const [initialLoading, setInitialLoading] = useState(true);
 
 
     useEffect(() => {
+
         fetchProduct();
+
     }, []);
 
 
     const fetchProduct = async () => {
-        const res =
-            await API.get(`/products/${id}`);
-        const p =
-            res.data.data || res.data;
-        setForm({
-            title: p.title,
-            price: p.price,
-            description: p.description,
-            image: null,
-            imageUrl: p.image
-        });
-        setPreview(p.image);
+
+        setInitialLoading(true);
+
+        const start = Date.now();
+
+        try {
+
+            const res = await API.get(`/products/${id}`);
+
+            const p = res.data.data || res.data;
+
+            setForm({
+
+                title: p.title,
+                price: p.price,
+                description: p.description,
+                image: null,
+                imageUrl: p.image
+
+            });
+
+            setPreview(p.image);
+
+        }
+
+        catch {
+
+            alert("Failed to load product");
+
+        }
+
+        finally {
+
+            const elapsed = Date.now() - start;
+
+            const delay = Math.max(2000 - elapsed, 0);
+
+            setTimeout(() => {
+
+                setInitialLoading(false);
+
+            }, delay);
+
+        }
 
     };
 
 
     const handleChange = (e) => {
+
         setForm({
+
             ...form,
+
             [e.target.name]: e.target.value
+
         });
+
     };
 
 
-    // FILE SELECT OR DROP
     const handleFileChange = (file) => {
+
         if (!file) return;
+
         setForm({
+
             ...form,
+
             image: file,
+
             imageUrl: ""
+
         });
 
-        setPreview(
-            URL.createObjectURL(file)
-        );
+        setPreview(URL.createObjectURL(file));
 
     };
 
 
     const handleInputFile = (e) => {
 
-        handleFileChange(
-            e.target.files[0]
-        );
+        handleFileChange(e.target.files[0]);
 
     };
 
@@ -88,9 +130,7 @@ export default function EditProduct() {
 
         e.preventDefault();
 
-        handleFileChange(
-            e.dataTransfer.files[0]
-        );
+        handleFileChange(e.dataTransfer.files[0]);
 
     };
 
@@ -115,90 +155,116 @@ export default function EditProduct() {
 
 
     const handleSubmit = async (e) => {
+
         e.preventDefault();
+
+        if (loading) return;
+
         try {
+
             if (!form.image && !form.imageUrl) {
+
                 alert("Select image file OR enter image URL");
-                return;
-            }
 
-            if (form.image && form.imageUrl) {
-                alert("Select only one: file OR URL");
                 return;
-            }
 
+            }
 
             setLoading(true);
+
             setProgress(0);
-            const formData =
-                new FormData();
-            formData.append(
-                "title",
-                form.title
-            );
 
-            formData.append(
-                "price",
-                form.price
-            );
+            const start = Date.now();
 
-            formData.append(
-                "description",
-                form.description
-            );
+            const formData = new FormData();
 
+            formData.append("title", form.title);
+            formData.append("price", form.price);
+            formData.append("description", form.description);
 
             if (form.image)
-                formData.append(
-                    "image",
-                    form.image
-                );
-
+                formData.append("image", form.image);
             else
-                formData.append(
-                    "image",
-                    form.imageUrl
-                );
+                formData.append("image", form.imageUrl);
 
 
             await API.put(
+
                 `/products/${id}`,
+
                 formData,
+
                 {
+
                     headers: {
-                        "Content-Type":
-                            "multipart/form-data"
+
+                        "Content-Type": "multipart/form-data"
+
                     },
 
-                    onUploadProgress:
-                        (event) => {
-                            const percent =
-                                Math.round(
-                                    (event.loaded * 100) /
-                                    event.total
-                                );
-                            setProgress(percent);
-                        }
+                    onUploadProgress: (event) => {
+
+                        const percent = Math.round(
+                            (event.loaded * 100) / event.total
+                        );
+
+                        setProgress(percent);
+
+                    }
+
                 }
+
             );
 
+            const elapsed = Date.now() - start;
 
-            alert("Product updated successfully");
-            navigate(`/products/${id}`);
+            const delay = Math.max(2000 - elapsed, 0);
+
+            setTimeout(() => {
+
+                alert("Product updated successfully");
+
+                navigate(`/products/${id}`);
+
+            }, delay);
+
         }
 
-        catch (error) {
+        catch {
+
             alert("Update failed");
+
         }
 
         finally {
-            setLoading(false);
 
-            setProgress(0);
+            setTimeout(() => {
+
+                setLoading(false);
+
+                setProgress(0);
+
+            }, 500);
 
         }
 
     };
+
+
+    //LOADER WHILE FETCHING
+    if (initialLoading) {
+
+        return (
+
+            <div style={styles.centerLoader}>
+
+                <Loader />
+
+            </div>
+
+        );
+
+    }
 
 
     return (
@@ -219,10 +285,9 @@ export default function EditProduct() {
 
                 <motion.input
                     name="title"
-                    placeholder="Product Title"
                     value={form.title}
                     onChange={handleChange}
-                    required
+                    disabled={loading}
                     style={styles.input}
                     whileFocus={styles.inputFocus}
                 />
@@ -231,10 +296,9 @@ export default function EditProduct() {
                 <motion.input
                     name="price"
                     type="number"
-                    placeholder="Price"
                     value={form.price}
                     onChange={handleChange}
-                    required
+                    disabled={loading}
                     style={styles.input}
                     whileFocus={styles.inputFocus}
                 />
@@ -242,39 +306,21 @@ export default function EditProduct() {
 
                 <motion.textarea
                     name="description"
-                    placeholder="Description"
                     value={form.description}
                     onChange={handleChange}
-                    required
+                    disabled={loading}
                     style={styles.textarea}
                     whileFocus={styles.inputFocus}
                 />
 
 
-                {/* SAME DROP AREA */}
                 <motion.div
-
                     style={styles.dropArea}
-
                     onDrop={handleDrop}
-
-                    onDragOver={(e) =>
-                        e.preventDefault()
-                    }
-
-                    onClick={() =>
-                        fileRef.current.click()
-                    }
-
-                    whileHover={{
-                        scale: 1.02
-                    }}
-
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => !loading && fileRef.current.click()}
                 >
-
-                    Drag & Drop Image
-                    OR Click to Select
-
+                    Drag & Drop Image OR Click
                 </motion.div>
 
 
@@ -286,21 +332,17 @@ export default function EditProduct() {
                 />
 
 
-                {/* URL */}
                 <motion.input
-                    type="text"
-                    placeholder="OR paste image URL"
                     value={form.imageUrl}
                     onChange={handleUrlChange}
+                    disabled={loading}
                     style={styles.input}
-                    whileFocus={styles.inputFocus}
                 />
 
 
-                {/* PREVIEW SAME SIZE */}
                 {preview && (
 
-                    <motion.img
+                    <img
                         src={preview}
                         style={styles.preview}
                     />
@@ -308,12 +350,11 @@ export default function EditProduct() {
                 )}
 
 
-                {/* PROGRESS */}
                 {loading && (
 
                     <div style={styles.progressBar}>
 
-                        <motion.div
+                        <div
                             style={{
                                 ...styles.progressFill,
                                 width: `${progress}%`
@@ -328,13 +369,12 @@ export default function EditProduct() {
                 <motion.button
                     disabled={loading}
                     style={styles.button}
-                    whileHover={{
-                        scale: 1.05
-                    }}
                 >
 
                     {loading
-                        ? `Updating ${progress}%`
+
+                        ? <Loader />
+
                         : "Update Product"}
 
                 </motion.button>
@@ -356,6 +396,13 @@ const styles = {
         padding: "40px"
     },
 
+    centerLoader: {
+        height: "60vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+    },
+
     form: {
         width: "340px",
         display: "flex",
@@ -363,8 +410,7 @@ const styles = {
         gap: "12px",
         background: "white",
         padding: "20px",
-        borderRadius: "12px",
-        boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
+        borderRadius: "12px"
     },
 
     input: {
@@ -379,50 +425,37 @@ const styles = {
         border: "1px solid #ddd"
     },
 
-    inputFocus: {
-        scale: 1.03,
-        borderColor: "#667eea",
-        boxShadow: "0 0 8px rgba(102,126,234,0.5)"
-    },
-
     dropArea: {
         padding: "20px",
         border: "2px dashed #667eea",
         borderRadius: "10px",
         textAlign: "center",
-        cursor: "pointer",
-        color: "#667eea"
+        cursor: "pointer"
     },
 
     preview: {
         width: "180px",
         height: "180px",
         objectFit: "cover",
-        borderRadius: "10px",
-        alignSelf: "center",
-        border: "1px solid #ddd"
+        alignSelf: "center"
     },
 
     progressBar: {
         width: "100%",
         height: "8px",
-        background: "#eee",
-        borderRadius: "10px"
+        background: "#eee"
     },
 
     progressFill: {
         height: "100%",
-        background: "#667eea",
-        borderRadius: "10px"
+        background: "#667eea"
     },
 
     button: {
         padding: "12px",
         background: "#667eea",
         color: "white",
-        border: "none",
-        borderRadius: "8px"
+        border: "none"
     }
 
 };
-
