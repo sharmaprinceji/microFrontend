@@ -1,37 +1,65 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+
+import { useNavigate, useParams } from "react-router-dom";
+
 import API from "../api/axios";
-import { useNavigate } from "react-router-dom";
+
 import { motion } from "framer-motion";
 
-export default function AddProduct() {
+
+export default function EditProduct() {
     const navigate = useNavigate();
+    const { id } = useParams();
     const fileRef = useRef();
     const [form, setForm] = useState({
-
         title: "",
         price: "",
         description: "",
         image: null,
         imageUrl: ""
-
     });
 
-    const [preview, setPreview] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [progress, setProgress] = useState(0);
+    const [preview, setPreview] =
+        useState(null);
+
+    const [loading, setLoading] =
+        useState(false);
+
+    const [progress, setProgress] =
+        useState(0);
 
 
-    // text change
+    useEffect(() => {
+        fetchProduct();
+    }, []);
+
+
+    const fetchProduct = async () => {
+        const res =
+            await API.get(`/products/${id}`);
+        const p =
+            res.data.data || res.data;
+        setForm({
+            title: p.title,
+            price: p.price,
+            description: p.description,
+            image: null,
+            imageUrl: p.image
+        });
+        setPreview(p.image);
+
+    };
+
+
     const handleChange = (e) => {
         setForm({
             ...form,
             [e.target.name]: e.target.value
         });
-
     };
 
 
-    // file select
+    // FILE SELECT OR DROP
     const handleFileChange = (file) => {
         if (!file) return;
         setForm({
@@ -40,31 +68,45 @@ export default function AddProduct() {
             imageUrl: ""
         });
 
-        setPreview(URL.createObjectURL(file));
+        setPreview(
+            URL.createObjectURL(file)
+        );
+
     };
 
 
-    // input file change
     const handleInputFile = (e) => {
-        handleFileChange(e.target.files[0]);
+
+        handleFileChange(
+            e.target.files[0]
+        );
+
     };
 
 
-    // drag drop
     const handleDrop = (e) => {
+
         e.preventDefault();
-        handleFileChange(e.dataTransfer.files[0]);
+
+        handleFileChange(
+            e.dataTransfer.files[0]
+        );
 
     };
 
 
-    // url change
     const handleUrlChange = (e) => {
+
         const url = e.target.value;
+
         setForm({
+
             ...form,
+
             imageUrl: url,
+
             image: null
+
         });
 
         setPreview(url);
@@ -72,80 +114,88 @@ export default function AddProduct() {
     };
 
 
-    // submit
     const handleSubmit = async (e) => {
-
         e.preventDefault();
-
         try {
-
             if (!form.image && !form.imageUrl) {
-
                 alert("Select image file OR enter image URL");
-
                 return;
             }
 
             if (form.image && form.imageUrl) {
-
                 alert("Select only one: file OR URL");
-
                 return;
             }
 
 
             setLoading(true);
             setProgress(0);
-            const formData = new FormData();
-            formData.append("title", form.title);
-            formData.append("price", form.price);
-            formData.append("description", form.description);
+            const formData =
+                new FormData();
+            formData.append(
+                "title",
+                form.title
+            );
+
+            formData.append(
+                "price",
+                form.price
+            );
+
+            formData.append(
+                "description",
+                form.description
+            );
 
 
             if (form.image)
-                formData.append("image", form.image);
+                formData.append(
+                    "image",
+                    form.image
+                );
+
             else
-                formData.append("image", form.imageUrl);
+                formData.append(
+                    "image",
+                    form.imageUrl
+                );
 
 
-            await API.post(
-
-                "/products",
-
+            await API.put(
+                `/products/${id}`,
                 formData,
                 {
                     headers: {
-                        "Content-Type": "multipart/form-data"
+                        "Content-Type":
+                            "multipart/form-data"
                     },
-                    onUploadProgress: (event) => {
-                        const percent =
-                            Math.round(
-                                (event.loaded * 100) /
-                                event.total
-                            );
-                        setProgress(percent);
-                    }
 
+                    onUploadProgress:
+                        (event) => {
+                            const percent =
+                                Math.round(
+                                    (event.loaded * 100) /
+                                    event.total
+                                );
+                            setProgress(percent);
+                        }
                 }
-
             );
 
-            alert("Product added successfully");
-            navigate("/products");
+
+            alert("Product updated successfully");
+            navigate(`/products/${id}`);
         }
 
         catch (error) {
-           // console.error(error);
-            alert(
-                error.response?.data?.message ||
-                "Upload failed"
-            );
-
+            alert("Update failed");
         }
 
         finally {
             setLoading(false);
+
             setProgress(0);
+
         }
 
     };
@@ -164,7 +214,7 @@ export default function AddProduct() {
                 style={styles.form}
             >
 
-                <h2>Add Product</h2>
+                <h2>Edit Product</h2>
 
 
                 <motion.input
@@ -201,7 +251,7 @@ export default function AddProduct() {
                 />
 
 
-                {/* DRAG DROP AREA */}
+                {/* SAME DROP AREA */}
                 <motion.div
 
                     style={styles.dropArea}
@@ -247,7 +297,7 @@ export default function AddProduct() {
                 />
 
 
-                {/* PREVIEW */}
+                {/* PREVIEW SAME SIZE */}
                 {preview && (
 
                     <motion.img
@@ -264,12 +314,10 @@ export default function AddProduct() {
                     <div style={styles.progressBar}>
 
                         <motion.div
-
                             style={{
                                 ...styles.progressFill,
                                 width: `${progress}%`
                             }}
-
                         />
 
                     </div>
@@ -280,12 +328,14 @@ export default function AddProduct() {
                 <motion.button
                     disabled={loading}
                     style={styles.button}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{
+                        scale: 1.05
+                    }}
                 >
 
                     {loading
-                        ? `Uploading ${progress}%`
-                        : "Add Product"}
+                        ? `Updating ${progress}%`
+                        : "Update Product"}
 
                 </motion.button>
 
@@ -375,3 +425,4 @@ const styles = {
     }
 
 };
+

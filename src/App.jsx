@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Favorites from "./pages/Favorites";
 import AddProduct from "./pages/AddProduct";
+import EditProduct from "./pages/EditProduct";
 
 
 function App() {
@@ -40,6 +41,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
+        <Route
+          path="/edit-product/:id"
+
+          element={
+            <ProtectedRoute>
+              <EditProduct />
+            </ProtectedRoute>
+          }
+
+        />
+
 
 
         <Route

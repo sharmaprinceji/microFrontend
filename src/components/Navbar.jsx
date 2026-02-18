@@ -43,16 +43,17 @@ export default function Navbar() {
     setMenuOpen(false);
   };
 
-  const getLinkStyle = ({ isActive }) => ({
-  color: "white",
-  textDecoration: "none",
-  fontSize: "16px",
-  padding: "6px 12px",
-  borderRadius: "6px",
-  background: isActive ? "#2ecc71" : "transparent",
-  transition: "all 0.2s ease"
-});
 
+  // Active link style
+  const getLinkStyle = ({ isActive }) => ({
+    color: "white",
+    textDecoration: "none",
+    fontSize: "16px",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    background: isActive ? "#2ecc71" : "transparent",
+    transition: "all 0.2s ease"
+  });
 
 
   return (
@@ -70,23 +71,35 @@ export default function Navbar() {
           🛒 MicroMarket
         </NavLink>
 
+
         {!isMobile && (
           <NavLink
             to="/products"
-           style={getLinkStyle}
+            style={getLinkStyle}
           >
             Products
           </NavLink>
         )}
 
-       {isAuthenticated && (
-            <NavLink
-              to="/favorites"
-             style={getLinkStyle}
-            >
-              Favorites ❤️
-            </NavLink>
-          )}
+
+        {isAuthenticated && !isMobile && (
+          <NavLink
+            to="/favorites"
+            style={getLinkStyle}
+          >
+            Favorites
+          </NavLink>
+        )}
+
+
+        {isAuthenticated && !isMobile && (
+          <NavLink
+            to="/add-product"
+            style={getLinkStyle}
+          >
+            Add Product
+          </NavLink>
+        )}
 
       </div>
 
@@ -106,13 +119,13 @@ export default function Navbar() {
 
               <NavLink
                 to="/register"
-                // style={styles.link}
                 style={getLinkStyle}
               >
                 Register
               </NavLink>
             </>
           )}
+
 
           {isAuthenticated && (
             <button
@@ -127,7 +140,7 @@ export default function Navbar() {
       )}
 
 
-      {/* HAMBURGER MOBILE */}
+      {/* MOBILE HAMBURGER */}
       {isMobile && (
 
         <div
@@ -153,7 +166,7 @@ export default function Navbar() {
 
           <NavLink
             to="/products"
-            style={styles.link}
+            style={getLinkStyle}
             onClick={() => setMenuOpen(false)}
           >
             Products
@@ -163,10 +176,21 @@ export default function Navbar() {
           {isAuthenticated && (
             <NavLink
               to="/favorites"
-              style={styles.link}
+              style={getLinkStyle}
               onClick={() => setMenuOpen(false)}
             >
               Favorites ❤️
+            </NavLink>
+          )}
+
+
+          {isAuthenticated && (
+            <NavLink
+              to="/add-product"
+              style={getLinkStyle}
+              onClick={() => setMenuOpen(false)}
+            >
+              Add Product
             </NavLink>
           )}
 
@@ -175,7 +199,7 @@ export default function Navbar() {
             <>
               <NavLink
                 to="/login"
-                style={styles.link}
+                style={getLinkStyle}
                 onClick={() => setMenuOpen(false)}
               >
                 Login
@@ -183,7 +207,7 @@ export default function Navbar() {
 
               <NavLink
                 to="/register"
-                style={styles.link}
+                style={getLinkStyle}
                 onClick={() => setMenuOpen(false)}
               >
                 Register
@@ -208,6 +232,7 @@ export default function Navbar() {
     </motion.nav>
   );
 }
+
 
 
 const styles = {
@@ -240,12 +265,6 @@ const styles = {
     fontWeight: "bold",
     color: "white",
     textDecoration: "none"
-  },
-
-  link: {
-    color: "white",
-    textDecoration: "none",
-    fontSize: "16px"
   },
 
   logout: {

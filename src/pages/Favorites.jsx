@@ -35,7 +35,7 @@ export default function Favorites() {
       animate={{ opacity: 1 }}
     >
 
-      <h2>Favorites ❤️</h2>
+      <h2>Favorites Products ~ </h2>
 
       <div style={styles.grid}>
 
